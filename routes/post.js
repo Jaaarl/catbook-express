@@ -37,4 +37,38 @@ router.get('/feed', protect, async (req, res) => {
   }
 });
 
+router.post('/:id/like', protect, async (req, res) => {
+    try {
+      const post = await Post.findById(req.params.id);
+      if (!post) return res.status(404).json({ message: 'Post not found' });
+  
+      // Prevent double like
+      if (post.likes.includes(req.user.id)) {
+        return res.status(400).json({ message: 'Already liked' });
+      }
+  
+      post.likes.push(req.user.id);
+      await post.save();
+      res.json({ message: 'Post liked', likes: post.likes.length });
+    } catch (err) {
+      res.status(500).json({ message: 'Server error' });
+    }
+});
+  
+router.post('/:id/unlike', protect, async (req, res) => {
+    try {
+        const post = await Post.findById(req.params.id);
+        if (!post) return res.status(404).json({ message: 'Post not found' });
+
+        post.likes = post.likes.filter(
+        (userId) => userId.toString() !== req.user.id
+        );
+        await post.save();
+        res.json({ message: 'Post unliked', likes: post.likes.length });
+    } catch (err) {
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+  
+
 module.exports = router;
